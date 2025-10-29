@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Permiso personalizado para la comunicación interna segura -->
+    <permission android:name="com.arturocalcagno.fecoapp.permission.DOWNLOAD_FINISHED" android:protectionLevel="signature" />
+    <uses-permission android:name="com.arturocalcagno.fecoapp.permission.DOWNLOAD_FINISHED" />
+
+    <!-- Permisos de ubicación -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    <uses-feature android:name="android.hardware.location.gps" />
+
+    <!-- Estado de la red e internet -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Permiso para Google Services -->
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES"/>
+
+    <!-- Permisos para la cámara -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Permisos de almacenamiento -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" /> <!-- Hasta Android 12 (API 32) -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" /> <!-- WRITE_EXTERNAL_STORAGE solo es necesario hasta Android 9 (API 28) -->
+
+    <!-- Permisos para Android 13 y superior (API 33) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"
+        android:required="false" />
+
+    <!-- Permiso para instalación de aplicaciones desde fuentes desconocidas -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+
+    <uses-feature
+        android:name="android.hardware.camera" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+
+    <application
+        android:hardwareAccelerated="true"
+        android:icon="@drawable/logo"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="31">
+        <meta-data
+            android:resource="@xml/file_paths"
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/map_key"/>
+
+        <activity
+            android:name=".FecoApp"
+            android:exported="true"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".Principal"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".Remitos"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".Cargas"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:screenOrientation="portrait"
+            tools:replace="screenOrientation" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.arturocalcagno.fecoapp.FecoApp"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+        
+        <receiver
+            android:name=".DownloadReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.DownloadManager.ACTION_DOWNLOAD_COMPLETE"/>
+                <action android:name="android.app.DownloadManager.ACTION_NOTIFICATION_CLICKED"/>
+            </intent-filter>
+        </receiver>
+        
+    </application>
+
+</manifest>

@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/linearLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#ffffff"
+    android:fitsSystemWindows="true"
+    android:weightSum="1">
+
+    <Button
+        android:id="@+id/cmdPrincipal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/holo_red_dark"
+        android:clickable="true"
+        android:onClick="lanzarprincipal"
+        android:text="@string/lt_volver_a_la_pantalla_principal"
+        android:textColor="@color/abc_primary_text_disable_only_material_dark"
+        tools:ignore="HardcodedText,UsingOnClickInXml"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:focusable="true" />
+
+    <TextView
+        android:id="@+id/textViewDescripcion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:singleLine="false"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="@string/disponibilidad"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cmdPrincipal" />
+
+    <TextView
+        android:id="@+id/textViewEmpresa"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="14dp"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="@string/empresa"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewDescripcion" />
+
+    <EditText
+        android:id="@+id/txtEmpresa"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="6dp"
+        android:enabled="true"
+        android:inputType="textPersonName"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@color/black"
+        android:textStyle="bold|italic"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/textViewEmpresa"
+        app:layout_constraintTop_toBottomOf="@+id/textViewDescripcion" />
+
+    <TextView
+        android:id="@+id/textViewCelContacto"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="10dp"
+        android:text="Celular     "
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@color/black"
+        app:layout_constraintTop_toBottomOf="@+id/txtEmpresa"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="HardcodedText" />
+
+    <EditText
+        android:id="@+id/txtCelContacto"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="2dp"
+        android:layout_weight="7"
+        android:digits="0123456789"
+        android:enabled="true"
+        android:inputType="numberDecimal"
+        android:selectAllOnFocus="false"
+        android:singleLine="true"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@android:color/black"
+        android:textStyle="bold|italic"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/textViewCelContacto"
+        app:layout_constraintTop_toBottomOf="@+id/txtEmpresa" />
+
+    <TextView
+        android:id="@+id/textViewZona"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="4dp"
+        android:text="Destino     "
+        android:gravity="center_vertical|center"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtCelContacto"
+        tools:ignore="HardcodedText" />
+
+    <Spinner
+        android:id="@+id/spinnerzonas"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="4dp"
+        android:spinnerMode="dropdown"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textStyle="bold|italic"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/textViewZona"
+        app:layout_constraintTop_toBottomOf="@+id/txtCelContacto" />
+
+
+    <TextView
+        android:id="@+id/textViewDisponibilidad"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="12dp"
+        android:text="Disponibilidad "
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@color/black"
+        app:layout_constraintTop_toBottomOf="@+id/spinnerzonas"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="HardcodedText" />
+
+    <EditText
+        android:id="@+id/txtFechaDisponibilidad"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:focusable="false"
+        android:inputType="date"
+        android:maxLines="1"
+        android:layout_weight="7"
+        android:layout_marginTop="4dp"
+        android:layout_marginLeft="2dp"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@android:color/black"
+        android:textStyle="bold|italic"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:gravity="center_vertical|left"
+        app:layout_constraintStart_toEndOf="@+id/textViewDisponibilidad"
+        app:layout_constraintTop_toBottomOf="@+id/spinnerzonas" />
+
+    <TextView
+        android:id="@+id/textViewVehiculos"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="8dp"
+        android:text="Vehículos         "
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@color/black"
+        app:layout_constraintTop_toBottomOf="@+id/txtFechaDisponibilidad"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="HardcodedText" />
+
+    <EditText
+        android:id="@+id/txtVehiculos"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="2dp"
+        android:layout_weight="7"
+        android:digits="0123456789"
+        android:enabled="true"
+        android:inputType="numberDecimal"
+        android:selectAllOnFocus="false"
+        android:singleLine="true"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@android:color/black"
+        android:textStyle="bold|italic"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/textViewVehiculos"
+        app:layout_constraintTop_toBottomOf="@+id/txtFechaDisponibilidad" />
+
+    <Button
+        android:id="@+id/cmdAgregarDisponibilidad"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorFeco1"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_marginTop="8dp"
+        android:onClick="agregardisponibilidad"
+        android:text="@string/enviar_disponibilidad"
+        android:textColor="#ffffff"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtVehiculos" />
+
+    <TextView
+        android:id="@+id/txtResultadoDisponibilidad"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:textColor="@android:color/holo_red_dark"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textStyle="normal|bold"
+        app:layout_constraintTop_toBottomOf="@+id/cmdAgregarDisponibilidad"
+        tools:ignore="MissingConstraints" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:contentDescription="@string/imgFecovita"
+        android:elevation="2dp"
+        android:src="@drawable/logofecovita"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="MissingConstraints" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

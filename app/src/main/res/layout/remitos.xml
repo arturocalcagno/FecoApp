@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/linearLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#ffffff"
+    android:fitsSystemWindows="true"
+    android:weightSum="1">
+
+    <Button
+        android:id="@+id/cmdPrincipal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorFeco1"
+        android:clickable="true"
+        android:onClick="lanzarprincipal"
+        android:text="@string/lt_volver_a_la_pantalla_principal"
+        android:textColor="@color/abc_primary_text_disable_only_material_dark"
+        tools:ignore="HardcodedText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:focusable="true" />
+
+    <TextView
+        android:id="@+id/textViewEncabezado"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:singleLine="false"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="@string/encabezado"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cmdPrincipal" />
+
+    <ImageView
+        android:id="@+id/imageViewAgregar"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="4dp"
+        android:elevation="3dp"
+        android:src="@drawable/agregar2_80"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewEncabezado"
+        tools:ignore="MissingConstraints" />
+
+    <Button
+        android:id="@+id/cmdNuevoIngreso"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:background="@android:color/holo_green_dark"
+        android:clickable="true"
+        android:text="@string/nuevo_ingreso"
+        android:textColor="#ffffff"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/imageViewAgregar"
+        android:focusable="true" />
+
+    <TextView
+        android:id="@+id/textViewNroCarga"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/nro_carga"
+        android:gravity="end"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/txtNroCarga"
+        app:layout_constraintBottom_toBottomOf="@+id/txtNroCarga" />
+
+    <EditText
+        android:id="@+id/txtNroCarga"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_marginStart="2dp"
+        android:enabled="false"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toEndOf="@+id/textViewNroCarga"
+        app:layout_constraintTop_toBottomOf="@+id/imageViewAgregar" />
+
+    <TextView
+        android:id="@+id/textViewRemito"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:text="Remito: "
+        android:gravity="end"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/black"
+        app:layout_constraintTop_toTopOf="@+id/txtBocaRemito"
+        app:layout_constraintBottom_toBottomOf="@+id/txtBocaRemito"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="HardcodedText" />
+
+    <EditText
+        android:id="@+id/txtBocaRemito"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:enabled="false"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@color/black"
+        app:layout_constraintTop_toBottomOf="@+id/txtNroCarga"
+        app:layout_constraintStart_toEndOf="@+id/textViewRemito" />
+
+    <TextView
+        android:id="@+id/textViewGuion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/black"
+        android:text="-"
+        app:layout_constraintStart_toEndOf="@+id/txtBocaRemito"
+        app:layout_constraintBottom_toBottomOf="@+id/txtBocaRemito"
+        tools:ignore="HardcodedText" />
+
+    <EditText
+        android:id="@+id/txtRemito"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:enabled="false"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toEndOf="@+id/textViewGuion"
+        app:layout_constraintBottom_toBottomOf="@+id/txtBocaRemito"
+        />
+
+    <TextView
+        android:id="@+id/textViewCliente"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:text="Cliente: "
+        android:gravity="end"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/black"
+        app:layout_constraintTop_toTopOf="@+id/txtRazonSocial"
+        app:layout_constraintBottom_toBottomOf="@+id/txtRazonSocial"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="HardcodedText" />
+
+    <EditText
+        android:id="@+id/txtRazonSocial"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:enabled="false"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@color/black"
+        app:layout_constraintTop_toBottomOf="@+id/txtBocaRemito"
+        app:layout_constraintStart_toEndOf="@+id/textViewCliente" />
+
+    <ImageView
+        android:id="@+id/imageView1"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="6dp"
+        android:elevation="3dp"
+        android:src="@drawable/camera80"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtRazonSocial"
+        tools:ignore="MissingConstraints" />
+
+    <Button
+        android:id="@+id/cmdTomarFoto1"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:background="?android:attr/colorPressedHighlight"
+        android:clickable="true"
+        android:text="2.1.FOTO 1"
+        android:textColor="#ffffff"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/imageView1"
+        android:focusable="true" />
+
+    <ImageView
+        android:id="@+id/imageView2"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="6dp"
+        android:elevation="3dp"
+        android:src="@drawable/camera80"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageView1"
+        tools:ignore="MissingConstraints" />
+
+    <Button
+        android:id="@+id/cmdTomarFoto2"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:background="?android:attr/colorPressedHighlight"
+        android:clickable="true"
+        android:enabled="false"
+        android:focusable="true"
+        android:text="2.2.FOTO 2 (OPCIONAL)"
+        android:textColor="#ffffff"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/imageView2" />
+
+    <ImageView
+        android:id="@+id/imageViewEnviar"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="5dp"
+        android:elevation="3dp"
+        android:src="@drawable/enviar80"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageView2"
+        tools:ignore="MissingConstraints" />
+
+    <Button
+        android:id="@+id/cmdAgregarRemito"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:background="#1c8adb"
+        android:clickable="true"
+        android:focusable="true"
+        android:onClick="agregartransaccion"
+        android:text="@string/enviar_remito_conformado"
+        android:textColor="#ffffff"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/imageViewEnviar" />
+
+    <TextView
+        android:id="@+id/txtResultadoEnvio"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:textColor="@android:color/holo_red_dark"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textStyle="normal|bold"
+        app:layout_constraintTop_toBottomOf="@+id/cmdAgregarRemito"
+        tools:ignore="MissingConstraints" />
+
+    <TextView
+        android:id="@+id/txtResultadoRemito"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:textColor="@android:color/holo_red_dark"
+        android:textStyle="normal|bold"
+        app:layout_constraintTop_toBottomOf="@+id/txtResultadoEnvio"
+        tools:ignore="MissingConstraints" />
+
+    <ImageView
+        android:layout_width="264dp"
+        android:layout_height="56dp"
+        android:contentDescription="@string/imgFecovita"
+        android:elevation="2dp"
+        android:src="@drawable/logofecovita"
+        app:layout_constraintBottom_toTopOf="@+id/cmdTransferirPendientes"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.454"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="MissingConstraints" />
+
+    <Button
+        android:id="@+id/cmdTransferirPendientes"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="2dp"
+        android:background="@android:color/holo_red_dark"
+        android:clickable="true"
+        android:focusable="true"
+        android:onClick="transferirremitospendientes"
+        android:text="TRANSFERIR PENDIENTES"
+        android:textColor="#ffffff"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:ignore="HardcodedText,MissingConstraints"
+        tools:layout_editor_absoluteX="2dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,38 @@
+<resources>
+    <string name="app_name">FecoApp</string>
+    <string name="txtPrincipal">FecoApp - Caminantes</string>
+    <string name="imgFecovita">imgFecovita</string>
+    <string name="cmdingresar">INGRESAR</string>
+    <string name="title_activity_principal">Principal</string>
+    <string name="title_activity_remito">Remitos</string>
+    <string name="title_activity_cargas">Cargas</string>
+    <string name="title_activity_tomarfoto">Tomar Foto</string>
+    <string name="lt_volver_a_la_pantalla_principal"><![CDATA[<- VOLVER A LA PANTALLA PRINCIPAL]]></string>
+    <string name="lt_volver_a_la_pantalla_inicial"><![CDATA[<- VOLVER A LA PANTALLA INICIAL]]></string>
+    <string name="lt_volver_a_la_hojaderuta"><![CDATA[<- VOLVER A LA HOJA DE RUTA]]></string>
+    <string name="sincronizar">SINCRONIZAR</string>
+    <string name="celular"></string>
+    <string-array name="ordenarpor">
+        <item>Ruta</item>
+        <item>Nombre</item>
+        <item>Dirección</item>
+    </string-array>
+    <string name="map_key" translatable="false">
+        AIzaSyAdYl5sPMCD1GC_A4yZsogPLoQo2lv9jSQ
+    </string>
+    <string name="str_hnt_lat">Enter Latitude</string>
+    <string name="str_hnt_lng">Enter Longitude</string>
+    <string name="take_picture">Tomar Foto</string>
+    <string name="take_ubicacion">Mostrar Posición</string>
+    <string name="fecha_h_ruta">Fecha H. Ruta</string>
+    <string name="estado">Estado</string>
+    <string name="pantalla_remito">REMITO CONFORMADO</string>
+    <string name="pantalla_cargas">DISPONIBILIDAD CARGAS</string>
+    <string name="nuevo_ingreso">1.REMITO CONFORMADO</string>
+    <string name="nro_carga">N°Carga: </string>
+    <string name="enviar_remito_conformado">3.ENVIAR REMITO</string>
+    <string name="disponibilidad">INFORME SU DISPONIBILIDAD DE VEHÍCULOS PARA VIAJES</string>
+    <string name="encabezado">REGISTRE LOS REMITOS EN EL DOMICILIO DE DESCARGA</string>
+    <string name="enviar_disponibilidad">ENVIAR DISPONIBILIDAD</string>
+    <string name="empresa">Empresa </string>
+</resources>
