@@ -4,7 +4,7 @@
     "type": "APK",
     "kind": "Directory"
   },
-  "applicationId": "com.arturocalcagno.fecoapp",
+  "applicationId": "com.arturocalcagno.fecoApp",
   "variantName": "release",
   "elements": [
     {

@@ -1,10 +1,10 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+// build.gradle (A nivel de Proyecto)
+
+// Este bloque define los plugins y sus versiones para TODO el proyecto.
+// Es la forma moderna de declarar el plugin de Android.
 plugins {
-    id 'com.android.application' version '8.13.0' apply false
-    id 'com.android.library' version '8.13.0' apply false
+    // Definimos el plugin de aplicación de Android y su versión,
+    // pero le decimos que NO lo aplique aquí (apply false).
+    // Esto solo lo hace disponible para otros módulos.
+    alias(libs.plugins.androidApplication) apply false
 }
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
-}
-

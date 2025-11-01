@@ -35,4 +35,21 @@
     <string name="encabezado">REGISTRE LOS REMITOS EN EL DOMICILIO DE DESCARGA</string>
     <string name="enviar_disponibilidad">ENVIAR DISPONIBILIDAD</string>
     <string name="empresa">Empresa </string>
+
+    <!-- Cadenas de texto para el flujo de actualización -->
+    <string name="version_format">Versión %s</string>
+    <string name="button_downloading">DESCARGANDO...</string>
+    <string name="button_install">INSTALAR</string>
+    <string name="button_update">ACTUALIZAR</string>
+    <string name="status_no_connection">Sin conexión</string>
+    <string name="status_no_connection_cant_login">Sin conexión. No se puede ingresar</string>
+    <string name="status_new_version_available">Nueva Versión Disponible</string>
+    <string name="update_downloading_notification">Descargando la nueva versión...</string>
+    <string name="update_title">Actualización de FecoApp</string>
+    <string name="dialog_please_wait">Por favor espere</string>
+    <string name="dialog_validating_data">Validando datos</string>
+    <string name="error_update_file_not_found">Archivo de actualización no encontrado. Reiniciando estado...</string>
+    <string name="error_package_installer_not_found">No se encontró un instalador de paquetes válido.</string>
+    <string name="download_started_notification">La descarga ha comenzado. Verifique el progreso en la barra de notificaciones.</string>
+
 </resources>

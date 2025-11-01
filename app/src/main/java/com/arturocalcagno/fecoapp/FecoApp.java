@@ -1,17 +1,17 @@
 package com.arturocalcagno.fecoapp;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.DownloadManager;
-import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -19,6 +19,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar; // Importar ProgressBar
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,7 +27,7 @@ import androidx.core.content.FileProvider;
 
 import java.io.File;
 
-public class FecoApp extends Activity{
+public class FecoApp extends Activity {
 
     private TextView resultado;
     public String versioninstalada;
@@ -34,12 +35,12 @@ public class FecoApp extends Activity{
     private Button ingresar;
     public Boolean internet;
     private Boolean fin;
-    private static final String APK_FILE_NAME = "FecoApp3.apk";
+    private static final String APK_FILE_NAME = "FecoApp.apk";
 
     private Handler statusCheckHandler;
     private Runnable statusCheckRunnable;
+    private ProgressBar progressBar; // <-- NUEVO: Añadir ProgressBar
 
-    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,10 +48,12 @@ public class FecoApp extends Activity{
         resultado = findViewById(R.id.txtResultadoPermisos);
         DB db = new DB(this);
         ingresar = findViewById(R.id.cmd_ingresar);
+        progressBar = findViewById(R.id.progressBar); // <-- NUEVO: Inicializar el ProgressBar
+
         //Mostramos la versión instalada
         TextView version = findViewById(R.id.txtVersion);
         versioninstalada = getVersionName();
-        version.setText("Versión " + versioninstalada);
+        version.setText(getString(R.string.version_format, versioninstalada));
 
         // Inicializamos el verificador de estado
         statusCheckHandler = new Handler(Looper.getMainLooper());
@@ -58,10 +61,10 @@ public class FecoApp extends Activity{
             @Override
             public void run() {
                 // Solo actuar si el botón está en modo "Descargando"
-                if (ingresar != null && "DESCARGANDO...".equals(ingresar.getText().toString())) {
+                if (ingresar != null && getString(R.string.button_downloading).equals(ingresar.getText().toString())) {
                     if (isApkAlreadyDownloaded()) {
                         // Si el APK ya existe, la descarga terminó. Actualizamos la UI.
-                        ingresar.setText("INSTALAR");
+                        ingresar.setText(R.string.button_install);
                         ingresar.setEnabled(true);
                         // No volvemos a programar el verificador, el trabajo está hecho.
                     } else {
@@ -77,7 +80,7 @@ public class FecoApp extends Activity{
     protected void onResume() {
         super.onResume();
         // Si volvemos a la app y estaba descargando, reactivamos el verificador inmediatamente.
-        if (ingresar != null && "DESCARGANDO...".equals(ingresar.getText().toString())) {
+        if (ingresar != null && getString(R.string.button_downloading).equals(ingresar.getText().toString())) {
             statusCheckHandler.post(statusCheckRunnable);
         }
     }
@@ -99,92 +102,92 @@ public class FecoApp extends Activity{
         }
     }
 
-    @SuppressLint("SetTextI18n")
-    public void lanzarloginnew (View view){
+    public void lanzarloginnew(View view) {
         if (internetDisponible()) {
             String buttonText = ingresar.getText().toString();
-            if (buttonText.equals("ACTUALIZAR")) {
+            if (buttonText.equals(getString(R.string.button_update))) {
                 iniciaractualizacion();
-            } else if (buttonText.equals("INSTALAR")) {
+            } else if (buttonText.equals(getString(R.string.button_install))) {
                 installDownloadedApk();
             } else { // INGRESAR
                 iniciarapp();
             }
         } else {
-            resultado.setText("Sin conexión");
+            resultado.setText(R.string.status_no_connection);
         }
     }
 
-    @SuppressLint("SetTextI18n")
     private void iniciaractualizacion() {
         File apkFile = getApkFile();
         if (apkFile != null && apkFile.exists()) {
             apkFile.delete();
         }
 
-        String apkUrl = "https://github.com/arturocalcagno/vendedores.fecoapp/releases/download/V2.0/FecoApp3.apk";
+        String apkUrl = "https://github.com/arturocalcagno/vendedores.fecoapp/releases/download/V2.0/FecoApp.apk";
 
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(apkUrl));
-        request.setTitle("Actualización de FecoApp");
-        request.setDescription("Descargando la nueva versión...");
+        request.setTitle(getString(R.string.update_title));
+        request.setDescription(getString(R.string.update_downloading_notification));
         request.setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS, APK_FILE_NAME);
         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-        request.allowScanningByMediaScanner();
+        // request.allowScanningByMediaScanner(); // <-- CORREGIDO: Método obsoleto eliminado.
 
         DownloadManager downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
         downloadManager.enqueue(request);
 
         if (ingresar != null) {
             ingresar.setEnabled(false);
-            ingresar.setText("DESCARGANDO...");
+            ingresar.setText(R.string.button_downloading);
         }
 
         // Iniciamos el verificador periódico
         statusCheckHandler.post(statusCheckRunnable);
 
-        Toast.makeText(this, "Descargando", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, R.string.download_started_notification, Toast.LENGTH_LONG).show();
     }
 
-    @SuppressLint("SetTextI18n")
     private void iniciarapp() {
         final Intent[] i = new Intent[1];
-        final ProgressDialog ringProgressDialog = ProgressDialog.show(FecoApp.this, "Por favor espere", "Validando datos", true);
-        ringProgressDialog.setCancelable(false);
+
+        // --- CORRECCIÓN: Reemplazo de ProgressDialog por ProgressBar ---
+        progressBar.setVisibility(View.VISIBLE); // Mostrar ProgressBar
+        ingresar.setEnabled(false); // Deshabilitar botón durante la carga
+
         new Thread(() -> {
-                internet = internetDisponible();
-                if (internet) {
-                    WebService ws = new WebService();
-                    versionmatch = ws.validarversion(versioninstalada);
-                }
+            internet = internetDisponible();
+            if (internet) {
+                WebService ws = new WebService();
+                versionmatch = ws.validarversion(versioninstalada);
+            }
+
+            // Volver al hilo principal para actualizar la UI
             runOnUiThread(() -> {
-                if (!internet){
-                    resultado.setText("Sin conexión. No se puede ingresar");
+                progressBar.setVisibility(View.GONE); // Ocultar ProgressBar
+
+                if (!internet) {
+                    resultado.setText(R.string.status_no_connection_cant_login);
                     fin = true;
                 } else {
                     fin = false;
                 }
-            });
-            ringProgressDialog.dismiss();
 
-            runOnUiThread(() -> {
-                if (!fin){
+                if (!fin) {
                     if (!versioninstalada.equals(versionmatch)) {
-                        resultado.setText("Nueva Versión Disponible");
-                        // Comprueba si la actualización ya está descargada para mostrar el botón correcto
+                        resultado.setText(R.string.status_new_version_available);
                         if (isApkAlreadyDownloaded()) {
-                            ingresar.setText("INSTALAR");
+                            ingresar.setText(R.string.button_install);
                         } else {
-                            ingresar.setText("ACTUALIZAR");
-                        }
-                        if (ingresar != null) {
-                            ingresar.setEnabled(true);
+                            ingresar.setText(R.string.button_update);
                         }
                     } else {
                         i[0] = new Intent(FecoApp.this, Principal.class);
                         startActivity(i[0]);
                         finish();
+                        return; // Salir para no re-habilitar el botón innecesariamente
                     }
                 }
+                // Si no se inició la nueva actividad, re-habilitar el botón
+                ingresar.setEnabled(true);
             });
         }).start();
     }
@@ -205,12 +208,14 @@ public class FecoApp extends Activity{
     private void installDownloadedApk() {
         File apkFile = getApkFile();
         if (apkFile == null || !apkFile.exists()) {
-            Toast.makeText(this, "Archivo de actualización no encontrado. Reiniciando estado...", Toast.LENGTH_LONG).show();
-            ingresar.setText("ACTUALIZAR");
+            Toast.makeText(this, R.string.error_update_file_not_found, Toast.LENGTH_LONG).show();
+            ingresar.setText(R.string.button_update);
             return;
         }
 
-        Uri apkUri = FileProvider.getUriForFile(this, "com.arturocalcagno.fecoapp.FecoApp", apkFile);
+        // --- CORRECCIÓN: Usar el authority definido en el Manifest ---
+        // Asegúrate que "com.arturocalcagno.fecoapp.fileprovider" es el authority correcto.
+        Uri apkUri = FileProvider.getUriForFile(this, "com.arturocalcagno.fecoapp.fileprovider", apkFile);
 
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
@@ -220,13 +225,27 @@ public class FecoApp extends Activity{
         try {
             startActivity(intent);
         } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, "No se encontró un instalador de paquetes válido.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.error_package_installer_not_found, Toast.LENGTH_SHORT).show();
         }
     }
 
+    // --- CORRECCIÓN: Método modernizado para verificar la conexión a internet ---
     public boolean internetDisponible() {
-        ConnectivityManager cManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-        NetworkInfo nInfo = cManager.getActiveNetworkInfo();
-        return nInfo != null && nInfo.isConnected();
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager == null) {
+            return false;
+        }
+
+        Network network = connectivityManager.getActiveNetwork();
+        if (network == null) {
+            return false; // No hay red activa
+        }
+
+        NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
+        return capabilities != null && (
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET));
     }
 }
+
