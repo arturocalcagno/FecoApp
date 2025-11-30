@@ -30,7 +30,7 @@
         android:clickable="true"
         android:enabled="true"
         android:focusable="true"
-        android:onClick="lanzarloginnew"
+        android:onClick="lanzarLogin"
         android:text="@string/cmdingresar"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:textColor="#ffffff"

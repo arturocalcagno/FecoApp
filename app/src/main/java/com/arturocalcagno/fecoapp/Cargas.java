@@ -4,23 +4,19 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.DatePickerDialog;
-import android.content.Context;import android.content.Intent;
+import android.content.Context;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.Button; // Se necesita para el botón de enviar
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
@@ -41,118 +37,118 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.Priority;
-import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Objects;
 
-// --- CORRECCIÓN: Heredar de Activity directamente ---
-public class Cargas extends Activity implements View.OnClickListener {
+public class Cargas extends Activity {
 
-    private EditText empresa, celular, vehiculos;
-    private Spinner zonas;
-    private TextView resultado;
-    private EditText fechadisponibilidad;
-    private Button botonEnviar; // Botón para iniciar la acción
+    // --- Vistas ---
+    private EditText empresaEditText, celularEditText, vehiculosEditText, fechaDisponibilidadEditText;
+    private Spinner zonasSpinner;
+    private TextView resultadoTextView;
+    private Button botonEnviar;
+    private ProgressBar progressBar;
 
-    public String empresazona = "", celularzona = "", zona = "", fechadisponible = "", totalvehiculos = "";
-    private final Calendar C = Calendar.getInstance();
-    private int mesini, anioini, diaini;
-    public Boolean online;
-    public String res = "";
+    // --- Datos ---
+    private String empresaZona, celularZona, zona, fechaDisponible, totalVehiculos;
+    private DB dbHelper; // MEJORA: Instancia única para el helper de la DB.
 
-    // --- Variables para Ubicación ---
+    // --- Ubicación ---
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback locationCallback;
     private String latitudeGPS, longitudeGPS;
-    private ProgressBar progressBar;
 
-    // --- Constantes para Permisos ---
+    // --- Constantes ---
     private static final int REQUEST_CODE_LOCATION_PERMISSION = 1;
     private static final int REQUEST_CHECK_SETTINGS = 3;
-
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.cargas);
 
-        // --- CORRECCIÓN: Usando los IDs de tu XML y casteando al tipo correcto ---
-        empresa = findViewById(R.id.txtEmpresa);
-        celular = findViewById(R.id.txtCelContacto);
-        zonas = findViewById(R.id.spinnerzonas);
-        fechadisponibilidad = findViewById(R.id.txtFechaDisponibilidad);
-        vehiculos = findViewById(R.id.txtVehiculos);
-        resultado = findViewById(R.id.txtResultadoDisponibilidad);
-        botonEnviar = findViewById(R.id.cmdAgregarDisponibilidad); // Asumiendo que este es el ID del botón de enviar
-        progressBar = findViewById(R.id.cargas_progressBar); // El ProgressBar que agregaste a tu XML
+        // MEJORA: Inicializar el DB Helper una sola vez.
+        dbHelper = new DB(this);
+
+        inicializarVistas();
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        agregarzonas();
-        configurarfechadisponibilidad();
-        traerultimaempresa();
         crearLocationCallback();
+
+        configurarSpinnerZonas();
+        configurarSelectorFecha();
+        cargarUltimosDatos();
+    }
+
+    private void inicializarVistas() {
+        empresaEditText = findViewById(R.id.txtEmpresa);
+        celularEditText = findViewById(R.id.txtCelContacto);
+        zonasSpinner = findViewById(R.id.spinnerzonas);
+        fechaDisponibilidadEditText = findViewById(R.id.txtFechaDisponibilidad);
+        vehiculosEditText = findViewById(R.id.txtVehiculos);
+        resultadoTextView = findViewById(R.id.txtResultadoDisponibilidad);
+        botonEnviar = findViewById(R.id.cmdAgregarDisponibilidad);
+        progressBar = findViewById(R.id.cargas_progressBar);
     }
 
     @SuppressLint("Range")
-    private void traerultimaempresa() {
-        // --- CORRECCIÓN: Pasar el contexto correcto (this) ---
-        DB db = new DB(this);
-        Cursor c = db.obtenerCarga();
-        if (c != null) {
-            if (c.moveToFirst()) {
-                empresazona = c.getString(c.getColumnIndex("empresa"));
-                celularzona = c.getString(c.getColumnIndex("celular"));
-                zona = c.getString(c.getColumnIndex("region"));
-                empresa.setText(empresazona);
-                celular.setText(celularzona);
-                // Aquí podrías preseleccionar la zona en el Spinner si quisieras
+    private void cargarUltimosDatos() {
+        // MEJORA: Usar la instancia única de dbHelper y try-with-resources para el cursor.
+        try (Cursor c = dbHelper.obtenerCarga()) {
+            if (c != null && c.moveToFirst()) {
+                empresaZona = c.getString(c.getColumnIndex("empresa"));
+                celularZona = c.getString(c.getColumnIndex("celular"));
+                // zona = c.getString(c.getColumnIndex("region")); // Opcional: preseleccionar en Spinner
+                empresaEditText.setText(empresaZona);
+                celularEditText.setText(celularZona);
             }
-            c.close();
+        } catch (Exception e) {
+            Log.e("CargasDB", "Error al cargar últimos datos", e);
         }
-        db.close();
     }
 
-    @Override
-    public void onClick(View v) {
-        // Este método está requerido por la interfaz, puede quedar vacío si no se usa.
-    }
-
-    // El método que se llama desde el atributo android:onClick del botón en el XML
-    public void agregardisponibilidad(View view) {
-        resultado.setText("");
-        zona = zonas.getSelectedItem().toString();
-
-        // Validaciones de los campos
-        if (empresa.getText().toString().isEmpty()) {
-            resultado.setText("Ingrese la Empresa");
-            return;
-        }
-        if (celular.getText().toString().isEmpty()) {
-            resultado.setText("Ingrese el Celular");
-            return;
-        }
-        if (Objects.equals(zona, "Seleccione")) {
-            resultado.setText("Seleccione una Provincia");
-            return;
-        }
-        if (vehiculos.getText().toString().isEmpty() || "0".equals(vehiculos.getText().toString())) {
-            resultado.setText("Indique cantidad de vehículos");
+    // Método llamado desde el XML (android:onClick="agregarDisponibilidad")
+    public void agregarDisponibilidad(View view) {
+        if (!validarCampos()) {
             return;
         }
 
-        empresazona = empresa.getText().toString();
-        celularzona = celular.getText().toString();
-        totalvehiculos = vehiculos.getText().toString();
+        // Guardar datos de los campos
+        empresaZona = empresaEditText.getText().toString();
+        celularZona = celularEditText.getText().toString();
+        zona = zonasSpinner.getSelectedItem().toString();
+        totalVehiculos = vehiculosEditText.getText().toString();
 
         iniciarProcesoDeUbicacionYEnvio();
     }
 
-    // --- El resto de la lógica (listas, calendarios, ubicación, etc.) sigue igual ---
+    private boolean validarCampos() {
+        resultadoTextView.setText(""); // Limpiar resultado anterior
 
-    private void agregarzonas() {
+        if (empresaEditText.getText().toString().trim().isEmpty()) {
+            resultadoTextView.setText(R.string.cargas_error_empresa);
+            return false;
+        }
+        if (celularEditText.getText().toString().trim().isEmpty()) {
+            resultadoTextView.setText(R.string.cargas_error_celular);
+            return false;
+        }
+        if (Objects.equals(zonasSpinner.getSelectedItem().toString(), "Seleccione")) {
+            resultadoTextView.setText(R.string.cargas_error_provincia);
+            return false;
+        }
+        if (vehiculosEditText.getText().toString().trim().isEmpty() || "0".equals(vehiculosEditText.getText().toString())) {
+            resultadoTextView.setText(R.string.cargas_error_vehiculos);
+            return false;
+        }
+        return true;
+    }
+
+    private void configurarSpinnerZonas() {
+        // MEJORA: Puedes considerar mover esta lista a un array en res/values/arrays.xml
         final ArrayList<String> arrayList = new ArrayList<>();
         arrayList.add("Seleccione");
         arrayList.add("CABA");
@@ -181,79 +177,85 @@ public class Cargas extends Activity implements View.OnClickListener {
         arrayList.add("Tucumán");
         ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, R.layout.spinner_items, arrayList);
         arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        zonas.setAdapter(arrayAdapter);
+        zonasSpinner.setAdapter(arrayAdapter);
     }
 
-    @SuppressLint("SetTextI18n")
-    private void configurarfechadisponibilidad() {
-        anioini = C.get(Calendar.YEAR);
-        mesini = C.get(Calendar.MONTH);
-        diaini = C.get(Calendar.DAY_OF_MONTH) + 1;
-        fechadisponibilidad.setFocusable(false); // Para que no se pueda escribir en él
-        fechadisponibilidad.setClickable(true);
+    private void configurarSelectorFecha() {
+        Calendar calendar = Calendar.getInstance();
+        fechaDisponibilidadEditText.setFocusable(false);
+        fechaDisponibilidadEditText.setClickable(true);
 
-        String diaFormateado = (diaini < 10) ? "0" + diaini : String.valueOf(diaini);
-        String mesFormateado = (mesini + 1 < 10) ? "0" + (mesini + 1) : String.valueOf(mesini + 1);
-        fechadisponibilidad.setText(diaFormateado + "/" + mesFormateado + "/" + anioini);
-        fechadisponible = anioini + "-" + mesFormateado + "-" + diaFormateado;
+        // Fecha por defecto: mañana
+        calendar.add(Calendar.DAY_OF_MONTH, 1);
+        actualizarCampoFecha(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
 
-        fechadisponibilidad.setOnClickListener(v -> {
+        fechaDisponibilidadEditText.setOnClickListener(v -> {
+            // Usa el calendario actual como base para el diálogo
             DatePickerDialog recogerFecha = new DatePickerDialog(Cargas.this, (view, year, month, dayOfMonth) -> {
-                final int mesActual = month + 1;
-                String diaFormateado1 = (dayOfMonth < 10) ? "0" + dayOfMonth : String.valueOf(dayOfMonth);
-                String mesFormateado1 = (mesActual < 10) ? "0" + mesActual : String.valueOf(mesActual);
-                fechadisponibilidad.setText(diaFormateado1 + "/" + mesFormateado1 + "/" + year);
-                fechadisponible = year + "-" + mesFormateado1 + "-" + diaFormateado1;
-                anioini = year;
-                mesini = month;
-                diaini = dayOfMonth;
-            }, anioini, mesini, diaini);
+                actualizarCampoFecha(year, month, dayOfMonth);
+            }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+
             recogerFecha.getDatePicker().setMinDate(System.currentTimeMillis());
             recogerFecha.show();
         });
     }
 
-    public void agregarcarga() {
-        DB db = new DB(this);
-        db.eliminarCarga();
-        db.agregarCarga(empresazona, celularzona, zona, fechadisponible, totalvehiculos, latitudeGPS, longitudeGPS);
-        db.close();
+    @SuppressLint("DefaultLocale")
+    private void actualizarCampoFecha(int year, int month, int dayOfMonth) {
+        // Formato para mostrar en el EditText (dd/MM/yyyy)
+        fechaDisponibilidadEditText.setText(String.format("%02d/%02d/%d", dayOfMonth, month + 1, year));
+        // Formato para guardar o enviar (yyyy-MM-dd)
+        fechaDisponible = String.format("%d-%02d-%02d", year, month + 1, dayOfMonth);
     }
+
+    private void guardarCargaLocalmente() {
+        // MEJORA: Usar la instancia única de dbHelper y no cerrarla.
+        dbHelper.eliminarCarga();
+        dbHelper.agregarCarga(empresaZona, celularZona, zona, fechaDisponible, totalVehiculos, latitudeGPS, longitudeGPS);
+    }
+
+    // --- Lógica de Ubicación y Envío ---
 
     private void iniciarProcesoDeUbicacionYEnvio() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE_LOCATION_PERMISSION);
         } else {
-            verificarGPSyObtenerUbicacionCargas();
+            verificarGPSyObtenerUbicacion();
         }
     }
 
-    @SuppressLint("SetTextI18n")
-    private void verificarGPSyObtenerUbicacionCargas() {
-        // --- CORRECCIÓN: Creación moderna de LocationRequest ---
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CODE_LOCATION_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                verificarGPSyObtenerUbicacion();
+            } else {
+                Toast.makeText(this, R.string.cargas_permiso_ubicacion_necesario, Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+
+    private void verificarGPSyObtenerUbicacion() {
         LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
                 .setWaitForAccurateLocation(false)
                 .setMinUpdateIntervalMillis(5000)
                 .build();
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest);
-        SettingsClient settingsClient = LocationServices.getSettingsClient(this);
-        Task<LocationSettingsResponse> task = settingsClient.checkLocationSettings(builder.build());
+        Task<LocationSettingsResponse> task = LocationServices.getSettingsClient(this).checkLocationSettings(builder.build());
 
-        task.addOnSuccessListener(locationSettingsResponse -> {
-            Log.d("Cargas_GPS", "Configuración de GPS OK. Obteniendo ubicación...");
-            obtenerUbicacionActualCargas(locationRequest);
-        });
-
+        task.addOnSuccessListener(locationSettingsResponse -> obtenerUbicacionActual(locationRequest));
         task.addOnFailureListener(e -> {
             if (e instanceof ResolvableApiException) {
                 try {
                     ((ResolvableApiException) e).startResolutionForResult(Cargas.this, REQUEST_CHECK_SETTINGS);
                 } catch (IntentSender.SendIntentException sendEx) {
-                    resultado.setText("Error al intentar activar el GPS");
+                    resultadoTextView.setText(R.string.cargas_error_activar_gps);
                 }
             } else {
-                resultado.setText("¡Activa el GPS para continuar!");
+                resultadoTextView.setText(R.string.cargas_necesita_gps);
             }
         });
     }
@@ -263,138 +265,103 @@ public class Cargas extends Activity implements View.OnClickListener {
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
-                fusedLocationClient.removeLocationUpdates(this); // Detener actualizaciones
+                fusedLocationClient.removeLocationUpdates(this);
                 if (!locationResult.getLocations().isEmpty()) {
                     android.location.Location location = locationResult.getLocations().get(0);
                     latitudeGPS = String.valueOf(location.getLatitude());
                     longitudeGPS = String.valueOf(location.getLongitude());
-                    Log.d("Cargas_Location", "Ubicación FRESCA obtenida: Lat=" + latitudeGPS + ", Lon=" + longitudeGPS);
-                    procesarEnvioDatosConUbicacion();
+                    procesarEnvioConUbicacion();
                 } else {
-                    Log.w("Cargas_Location", "LocationResult estaba vacío.");
                     runOnUiThread(() -> {
-                        progressBar.setVisibility(View.GONE);
-                        botonEnviar.setEnabled(true);
-                        resultado.setText("No se pudo obtener ubicación. Intente de nuevo.");
+                        mostrarProgreso(false);
+                        resultadoTextView.setText(R.string.cargas_error_ubicacion);
                     });
                 }
             }
         };
     }
 
-    @SuppressLint({"MissingPermission", "SetTextI18n"})
-    private void obtenerUbicacionActualCargas(LocationRequest locationRequest) {
-        // Deshabilitar botón y mostrar progreso ANTES de empezar a buscar ubicación
-        botonEnviar.setEnabled(false);
-        progressBar.setVisibility(View.VISIBLE);
-        resultado.setText("Obteniendo ubicación...");
+    @SuppressLint("MissingPermission")
+    private void obtenerUbicacionActual(LocationRequest locationRequest) {
+        mostrarProgreso(true);
+        resultadoTextView.setText(R.string.cargas_obteniendo_ubicacion);
 
-        fusedLocationClient.getLastLocation()
-                .addOnSuccessListener(this, location -> {
-                    // Comprobar si hay una ubicación reciente y válida
-                    if (location != null && (System.currentTimeMillis() - location.getTime()) < 60000) { // Menos de 1 min
-                        latitudeGPS = String.valueOf(location.getLatitude());
-                        longitudeGPS = String.valueOf(location.getLongitude());
-                        Log.d("Cargas_Location", "Ubicación RÁPIDA (last known) obtenida.");
-                        procesarEnvioDatosConUbicacion();
-                    } else {
-                        // Si no hay ubicación rápida, solicitar una nueva
-                        Log.d("Cargas_Location", "Solicitando ubicación fresca...");
-                        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
-                    }
-                })
-                .addOnFailureListener(this, e -> {
-                    Log.e("Cargas_Location", "Error al obtener getLastLocation.", e);
-                    progressBar.setVisibility(View.GONE);
-                    botonEnviar.setEnabled(true);
-                    resultado.setText("Error al obtener la ubicación.");
-                });
+        fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+            if (location != null && (System.currentTimeMillis() - location.getTime()) < 60000) { // Ubicación de hace < 1 min
+                latitudeGPS = String.valueOf(location.getLatitude());
+                longitudeGPS = String.valueOf(location.getLongitude());
+                procesarEnvioConUbicacion();
+            } else {
+                fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
+            }
+        }).addOnFailureListener(this, e -> {
+            mostrarProgreso(false);
+            resultadoTextView.setText(R.string.cargas_error_ubicacion);
+        });
     }
 
-    @SuppressLint("SetTextI18n")
-    private void procesarEnvioDatosConUbicacion() {
-        resultado.setText("Enviando disponibilidad...");
-        agregarcarga();
+    private void procesarEnvioConUbicacion() {
+        if (!internetDisponible()) {
+            manejarRespuestaEnvio(false, true);
+            return;
+        }
+
+        resultadoTextView.setText(R.string.cargas_enviando);
 
         new Thread(() -> {
-            online = internetDisponible();
-            if (online) {
-                WebService ws = new WebService();
-                res = ws.registrarcarganew(empresazona, celularzona, zona, fechadisponible, totalvehiculos, latitudeGPS, longitudeGPS);
-            } else {
-                res = "no_internet";
-            }
+            WebService ws = new WebService();
+            final String res = ws.agregarcarga(empresaZona, celularZona, zona, fechaDisponible, totalVehiculos, latitudeGPS, longitudeGPS);
+            final boolean exito = "true".equals(res);
 
-            runOnUiThread(() -> {
-                progressBar.setVisibility(View.GONE);
-                botonEnviar.setEnabled(true);
-
-                if ("true".equals(res)) {
-                    vehiculos.setText("");
-                    resultado.setText("¡Disponibilidad Recibida con Ubicación!");
-                } else if ("no_internet".equals(res)) {
-                    resultado.setText("Sin conexión, vuelva a intentar");
-                } else {
-                    resultado.setText("Error al enviar disponibilidad. Intente luego.");
-                    Log.e("Cargas_WebService", "Respuesta de registrarcarganew: " + res);
-                }
-            });
+            runOnUiThread(() -> manejarRespuestaEnvio(exito, false));
         }).start();
     }
 
-    @SuppressLint("SetTextI18n")
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CODE_LOCATION_PERMISSION) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Log.d("Cargas_Permission", "Permiso ACCESS_FINE_LOCATION concedido.");
-                verificarGPSyObtenerUbicacionCargas();
-            } else {
-                Log.w("Cargas_Permission", "Permiso ACCESS_FINE_LOCATION denegado.");
-                resultado.setText("Permiso de ubicación necesario para continuar.");
-                if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                    openAppSettings();
-                }
-            }
+    private void manejarRespuestaEnvio(boolean exito, boolean sinConexion) {
+        mostrarProgreso(false);
+        guardarCargaLocalmente(); // Guardar siempre la última carga
+
+        if (sinConexion) {
+            resultadoTextView.setText(R.string.cargas_sin_conexion);
+            Toast.makeText(this, R.string.cargas_sin_conexion, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (exito) {
+            resultadoTextView.setText(R.string.cargas_envio_exitoso);
+            Toast.makeText(this, R.string.cargas_envio_exitoso, Toast.LENGTH_LONG).show();
+            // Opcional: Limpiar campos o cerrar la actividad
+            // finish();
+        } else {
+            resultadoTextView.setText(R.string.cargas_envio_fallido);
+            Toast.makeText(this, R.string.cargas_envio_fallido, Toast.LENGTH_LONG).show();
         }
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CHECK_SETTINGS) {
-            if (resultCode == Activity.RESULT_OK) {
-                Log.d("Cargas_GPS", "El usuario activó el GPS. Reintentando.");
-                verificarGPSyObtenerUbicacionCargas();
-            } else {
-                Log.w("Cargas_GPS", "El usuario NO activó el GPS.");
-                resultado.setText("La activación del GPS es necesaria para continuar.");
-                progressBar.setVisibility(View.GONE);
-                botonEnviar.setEnabled(true);
-            }
-        }
+    private void mostrarProgreso(boolean mostrar) {
+        progressBar.setVisibility(mostrar ? View.VISIBLE : View.GONE);
+        botonEnviar.setEnabled(!mostrar);
     }
 
-    private void openAppSettings() {
-        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-        Uri uri = Uri.fromParts("package", getPackageName(), null);
-        intent.setData(uri);
-        startActivity(intent);
-        Toast.makeText(this, "Debe habilitar el permiso de ubicación manualmente", Toast.LENGTH_LONG).show();
-    }
-
-    // --- CORRECCIÓN: Método modernizado para verificar internet ---
     public boolean internetDisponible() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         if (cm == null) return false;
         Network network = cm.getActiveNetwork();
         if (network == null) return false;
         NetworkCapabilities capabilities = cm.getNetworkCapabilities(network);
-        return capabilities != null && (
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
-                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET));
+        return capabilities != null && (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET));
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // MEJORA: Cerrar la conexión a la DB cuando la actividad se destruye.
+        if (dbHelper != null) {
+            dbHelper.close();
+        }
+        // Detener actualizaciones de ubicación si aún están activas
+        if (fusedLocationClient != null && locationCallback != null) {
+            fusedLocationClient.removeLocationUpdates(locationCallback);
+        }
     }
 }
-

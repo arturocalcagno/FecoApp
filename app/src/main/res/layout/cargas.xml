@@ -193,7 +193,7 @@
         android:clickable="true"
         android:focusable="true"
         android:layout_marginTop="8dp"
-        android:onClick="agregardisponibilidad"
+        android:onClick="agregarDisponibilidad"
         android:text="@string/enviar_disponibilidad"
         android:textColor="#ffffff"
         app:layout_constraintStart_toStartOf="parent"

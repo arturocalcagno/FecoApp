@@ -36,16 +36,14 @@ public class DB extends SQLiteOpenHelper {
         if (oldVersion < 6) {
             Cursor cursor = db.rawQuery("PRAGMA table_info(remitos)", null);
             boolean columnExists = false;
-            if (cursor != null) {
-                while (cursor.moveToNext()) {
-                    String columnName = cursor.getString(cursor.getColumnIndex("name"));
-                    if ("foto2".equals(columnName)) {
-                        columnExists = true;
-                        break;
-                    }
+            while (cursor.moveToNext()) {
+                String columnName = cursor.getString(cursor.getColumnIndex("name"));
+                if ("foto2".equals(columnName)) {
+                    columnExists = true;
+                    break;
                 }
-                cursor.close();
             }
+            cursor.close();
             if (!columnExists) {
                 db.execSQL("ALTER TABLE remitos ADD COLUMN foto2 TEXT");
             }

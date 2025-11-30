@@ -46,7 +46,7 @@ public class WebService {
             // Configuración de la conexión HTTPS con el TrustManager personalizado
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
         } catch (Exception e) {
-            Log.e("DB_ERROR", "Error al agregar remito: ", e);  // Usar Log para registrar el error
+            Log.e("DB_ERROR", "Error al validar versión: ", e);  // Usar Log para registrar el error
         }
 
         sse = new SoapSerializationEnvelope(SoapEnvelope.VER11);
@@ -64,7 +64,59 @@ public class WebService {
             SoapPrimitive response = (SoapPrimitive) sse.getResponse();
             return response.toString();  // Devuelve la versión o "False"
         } catch (Exception e) {
-            Log.e("DB_ERROR", "Error al agregar remito: ", e);  // Usar Log para registrar el error
+            Log.e("DB_ERROR", "Error al validar versión: ", e);  // Usar Log para registrar el error
+            // En caso de excepción, devolver "False"
+            return "False";
+        }
+    }
+
+    public String validarversionPrueba(String version) {
+        final String SOAP_ACTION = "https://fecoapp.com.ar/ValidarVersionPrueba";
+        final String METHOD_NAME = "ValidarVersionPrueba";
+
+        SoapObject client;                       // It's the client petition to the web service
+        SoapSerializationEnvelope sse;
+
+        // Lo siguiente es para evitar validación de certificado SSL
+        // Configuración del TrustManager para manejar certificados SSL
+        @SuppressLint("CustomX509TrustManager") TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+            @SuppressLint("TrustAllX509TrustManager")
+            public void checkClientTrusted(X509Certificate[] chain, String authType) {
+            }
+            @SuppressLint("TrustAllX509TrustManager")
+            public void checkServerTrusted(X509Certificate[] chain, String authType) {
+            }
+            public X509Certificate[] getAcceptedIssuers() {
+                return new X509Certificate[]{};
+            }
+        }};
+
+        try {
+            // Configuración del TrustManager personalizado
+            SSLContext sc = SSLContext.getInstance("TLS");
+            sc.init(null, trustAllCerts, new SecureRandom());
+            // Configuración de la conexión HTTPS con el TrustManager personalizado
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        } catch (Exception e) {
+            Log.e("DB_ERROR", "Error al validar versión: ", e);  // Usar Log para registrar el error
+        }
+
+        sse = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+        sse.dotNet = true; // Se establece que el servicio web está hecho en .net
+        HttpTransportSE androidHttpTransport = new HttpTransportSE(URL);
+
+        client = new SoapObject(NAMESPACE, METHOD_NAME);
+        client.addProperty("version", version);
+        sse.setOutputSoapObject(client);
+
+        try {
+            // Llamada al servicio web
+            androidHttpTransport.call(SOAP_ACTION, sse);
+            // La respuesta del servicio web es un SoapPrimitive, no un SoapObject
+            SoapPrimitive response = (SoapPrimitive) sse.getResponse();
+            return response.toString();  // Devuelve la versión o "False"
+        } catch (Exception e) {
+            Log.e("DB_ERROR", "Error al validar versión: ", e);  // Usar Log para registrar el error
             // En caso de excepción, devolver "False"
             return "False";
         }
@@ -134,68 +186,7 @@ public class WebService {
         return res;
     }
 
-    public String registrarcarga(String empresa, String celular, String region, String disponibilidad, String vehiculos) {
-        String METHOD_NAME = "RegistrarCarga";
-        String SOAP_ACTION = "https://fecoapp.com.ar/RegistrarCarga";
-
-        String res = "false";  // Respuesta predeterminada en caso de error
-
-        // Lo siguiente es para evitar validación de certificado SSL
-        @SuppressLint("CustomX509TrustManager") TrustManager[] trustAllCerts = new TrustManager[]{
-                new X509TrustManager() {
-                    @SuppressLint("TrustAllX509TrustManager")
-                    public void checkClientTrusted(X509Certificate[] chain, String authType) {
-                    }
-                    @SuppressLint("TrustAllX509TrustManager")
-                    public void checkServerTrusted(X509Certificate[] chain, String authType) {
-                    }
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return new X509Certificate[]{};
-                    }
-                }
-        };
-
-        try {
-            // Configuración del TrustManager personalizado para SSL
-            SSLContext sc = SSLContext.getInstance("TLS");
-            sc.init(null, trustAllCerts, new SecureRandom());
-
-            // Configuración de la conexión HTTPS con el TrustManager personalizado
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-        } catch (Exception e) {
-            Log.e("DB_ERROR", "Error al agregar remito: ", e);  // Usar Log para registrar el error
-            return res;  // Si falla la configuración SSL, devolvemos "false"
-        }
-
-        // Creación del objeto SoapObject para realizar la llamada al servicio web
-        SoapObject rpc = new SoapObject(NAMESPACE, METHOD_NAME);
-        rpc.addProperty("empresa", empresa);
-        rpc.addProperty("celular", celular);
-        rpc.addProperty("region", region);
-        rpc.addProperty("disponibilidad", disponibilidad);
-        rpc.addProperty("vehiculos", vehiculos);
-
-        // Configuración de la envoltura para SOAP
-        SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
-        envelope.dotNet = true;  // El servicio está basado en .NET
-        envelope.setOutputSoapObject(rpc);
-
-        // Transporte HTTP para la solicitud SOAP
-        HttpTransportSE androidHttpTransport = new HttpTransportSE(URL, 60000);  // Timeout de 60 segundos
-
-        try {
-            // Llamada al servicio web
-            androidHttpTransport.call(SOAP_ACTION, envelope);
-            // Procesar la respuesta
-            res = envelope.getResponse().toString();
-        } catch (Exception e) {
-            Log.e("DB_ERROR", "Error al agregar remito: ", e);  // Usar Log para registrar el error
-            res = "false";  // En caso de error en la llamada, se retorna "false"
-        }
-        return res;
-    }
-
-    public String registrarcarganew(String empresa, String celular, String region, String disponibilidad, String vehiculos, String latitud, String longitud) {
+    public String agregarcarga(String empresa, String celular, String region, String disponibilidad, String vehiculos, String latitud, String longitud) {
         String METHOD_NAME = "RegistrarCargaNew";
         String SOAP_ACTION = "https://fecoapp.com.ar/RegistrarCargaNew";
 

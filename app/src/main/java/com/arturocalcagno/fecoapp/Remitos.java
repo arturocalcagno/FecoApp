@@ -21,18 +21,14 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Looper;
 import android.provider.MediaStore;
-import android.provider.Settings;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import androidx.annotation.NonNull;
 import android.widget.Toast;
 
-
-import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -52,10 +48,8 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.Priority;
-import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.Task;
 import com.google.zxing.integration.android.IntentIntegrator;
-
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -66,25 +60,37 @@ import java.util.Locale;
 
 public class Remitos extends AppCompatActivity {
 
-    private String carga, boca, remito, razonsocial, registro, imageurl;
-    private Button nuevoingreso, tomarfoto1, tomarfoto2, agregarremito, transferirpendientes;
-    private TextView txtResultadoEnvio, txtResultadoRemito;
-    private String bytesfoto1 = "", bytesfoto2 = "";
-    private int remitospendientes;
+    // --- Constantes ---
+    private static final int REQUEST_CODE_LOCATION_PERMISSION = 1;
+    private static final int REQUEST_CHECK_SETTINGS = 100;
+    private static final int FOTO_NUMERO_1 = 1;
+    private static final int FOTO_NUMERO_2 = 2;
 
+    // --- Vistas ---
+    private Button nuevoIngresoButton, tomarFoto1Button, tomarFoto2Button, agregarRemitoButton, transferirPendientesButton;
+    private TextView resultadoEnvio, resultadoRemito;
+    private ProgressBar progressBar, progressBarSinc;
+
+    // --- Datos del Remito ---
+    private TextView nrocarga;
+    private TextView bocaremito;
+    private TextView remito;
+    private TextView razonsocial;
+    private String registro;
+    private String bytesFoto1 = "", bytesFoto2 = "";
+    private String imageUrl;
+
+    // --- Base de Datos ---
     private DB dbHelper;
 
+    // --- Ubicación ---
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback locationCallback;
     private String latitudeGPS, longitudeGPS;
-    private ProgressBar progressBar, progressBarSinc;
 
-    private static final int REQUEST_CODE_LOCATION_PERMISSION = 1;
-    private static final int REQUEST_CHECK_SETTINGS = 100;
-
+    // --- Activity Launchers ---
     private ActivityResultLauncher<Intent> activityLauncher;
-    private Uri fotoUri;
-    private int fotoTomada;
+    private int fotoTomadaNumero;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -93,184 +99,162 @@ public class Remitos extends AppCompatActivity {
 
         dbHelper = new DB(this);
 
-        nuevoingreso = findViewById(R.id.cmdNuevoIngreso);
-        tomarfoto1 = findViewById(R.id.cmdTomarFoto1);
-        tomarfoto2 = findViewById(R.id.cmdTomarFoto2);
-        agregarremito = findViewById(R.id.cmdAgregarRemito);
-        transferirpendientes = findViewById(R.id.cmdTransferirPendientes);
-        txtResultadoEnvio = findViewById(R.id.txtResultadoEnvio);
-        txtResultadoRemito = findViewById(R.id.txtResultadoRemito);
+        inicializarVistas();
+        setupActivityLauncher();
 
-        progressBar = findViewById(R.id.remitos_progressBar);
-        progressBarSinc = findViewById(R.id.remitos_progressBar_sinc);
-
-        setupLauncher();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         crearLocationCallback();
 
-        pantallainicial();
+        configurarEstadoInicial();
     }
 
-    private void setupLauncher() {
+    private void inicializarVistas() {
+        nuevoIngresoButton = findViewById(R.id.cmdNuevoIngreso);
+        nrocarga = findViewById(R.id.txtNroCarga);
+        bocaremito = findViewById(R.id.txtBocaRemito);
+        remito = findViewById(R.id.txtRemito);
+        razonsocial = findViewById(R.id.txtRazonSocial);
+        tomarFoto1Button = findViewById(R.id.cmdTomarFoto1);
+        tomarFoto2Button = findViewById(R.id.cmdTomarFoto2);
+        agregarRemitoButton = findViewById(R.id.cmdAgregarRemito);
+        transferirPendientesButton = findViewById(R.id.cmdTransferirPendientes);
+        resultadoEnvio = findViewById(R.id.txtResultadoEnvio);
+        resultadoRemito = findViewById(R.id.txtResultadoRemito);
+        progressBar = findViewById(R.id.remitos_progressBar);
+        progressBarSinc = findViewById(R.id.remitos_progressBar_sinc);
+    }
+
+    private void setupActivityLauncher() {
         activityLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    // Resultado del Escáner QR
-                    com.google.zxing.integration.android.IntentResult qrResult = parseActivityResult(result.getResultCode(), result.getData());
-                    if (qrResult != null) {
-                        if (qrResult.getContents() != null) {
-                            String[] parts = qrResult.getContents().split(";");
-                            if (parts.length >= 4) {
-                                carga = parts[0];
-                                boca = parts[1];
-                                remito = parts[2];
-                                razonsocial = parts[3];
-                                registro = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
-                                txtResultadoRemito.setText("Boca: " + boca + " Remito: " + remito);
-                                tomarfoto1.setEnabled(true);
-                                tomarfoto1.getBackground().setAlpha(255);
-                            } else {
-                                txtResultadoEnvio.setText("Error: Código QR con formato incorrecto.");
-                            }
-                        }
-                    }
-                    // Resultado de la Cámara
-                    else if (result.getResultCode() == Activity.RESULT_OK) {
-                        if (fotoTomada == 1 || fotoTomada == 2) {
-                            try {
-                                Bitmap bm = rotateBitmapOrientation(imageurl);
-                                bm = escalar(bm);
-                                String base64Image = bitmapToBase64(bm);
-                                if (bm != null) bm.recycle();
-
-                                if (fotoTomada == 1) {
-                                    bytesfoto1 = base64Image;
-                                    tomarfoto1.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_green_dark));
-                                    tomarfoto2.setEnabled(true);
-                                    tomarfoto2.getBackground().setAlpha(255);
-                                    txtResultadoEnvio.setText("Foto 1 tomada");
-                                } else if (fotoTomada == 2) {
-                                    bytesfoto2 = base64Image;
-                                    tomarfoto2.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_green_dark));
-                                    agregarremito.setEnabled(true);
-                                    agregarremito.getBackground().setAlpha(255);
-                                    txtResultadoEnvio.setText("Foto 2 tomada");
-                                }
-                            } catch (IOException e) {
-                                txtResultadoEnvio.setText("Error al procesar la foto");
-                                Log.e("FOTO_ERROR", "Error I/O", e);
-                            } finally {
-                                clearCache();
-                            }
-                        }
+                    if (fotoTomadaNumero > 0) {
+                        procesarResultadoFoto(result);
+                    } else {
+                        procesarResultadoQR(result);
                     }
                 }
         );
     }
 
-    public void lanzarprincipal(View view) {
-        Intent i = new Intent(this, Principal.class);
-        startActivity(i);
-        finish();
-    }
+    private void procesarResultadoQR(androidx.activity.result.ActivityResult result) {
+        com.google.zxing.integration.android.IntentResult qrResult = parseActivityResult(result.getResultCode(), result.getData());
+        if (qrResult.getContents() != null) {
+            String[] parts = qrResult.getContents().split("-");
+            if (parts.length >= 4) {
+                try {
+                    nrocarga.setText(parts[0]);
+                    int bocaint = Integer.parseInt(parts[1]);
+                    bocaremito.setText(String.valueOf(bocaint));
+                    int remitoint = Integer.parseInt(parts[2]);
+                    remito.setText(String.valueOf(remitoint));
+                    razonsocial.setText(parts[3]);
+                    registro = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
 
-    public void pantallainicial() {
-        nuevoingreso.setEnabled(true);
-        nuevoingreso.getBackground().setAlpha(255);
-        tomarfoto1.setEnabled(false);
-        tomarfoto1.getBackground().setAlpha(64);
-        tomarfoto2.setEnabled(false);
-        tomarfoto2.getBackground().setAlpha(64);
-        agregarremito.setEnabled(false);
-        agregarremito.getBackground().setAlpha(64);
-        txtResultadoEnvio.setText("");
-        txtResultadoRemito.setText("");
-
-        progressBarSinc.setVisibility(View.VISIBLE);
-        txtResultadoEnvio.setText("Validando datos...");
-
-        new Thread(() -> {
-            if (internetDisponible()) {
-                sincronizarremitospendientes();
-            }
-            runOnUiThread(this::actualizarremitospendientes);
-        }).start();
-    }
-
-    @SuppressLint({"Range", "SetTextI18n"})
-    private void actualizarobjetospantalla() {
-        tomarfoto1.setEnabled(false);
-        tomarfoto1.setBackgroundColor(0xFFFEAA0C);
-        tomarfoto1.getBackground().setAlpha(64);
-        tomarfoto2.setEnabled(false);
-        tomarfoto2.setBackgroundColor(0xFFFEAA0C);
-        tomarfoto2.getBackground().setAlpha(64);
-        agregarremito.setEnabled(false);
-        agregarremito.getBackground().setAlpha(64);
-        bytesfoto1 = "";
-        bytesfoto2 = "";
-        txtResultadoRemito.setText("");
-
-        actualizarremitospendientes();
-    }
-
-    @SuppressLint({"Range", "SetTextI18n"})
-    private void actualizarremitospendientes() {
-        progressBarSinc.setVisibility(View.GONE);
-        remitospendientes = 0;
-        try (Cursor c = dbHelper.getTotalRemitosPendientes()) {
-            if (c != null && c.moveToFirst()) {
-                remitospendientes = c.getInt(c.getColumnIndex("total"));
+                    resultadoRemito.setText("");
+                    habilitarBoton(tomarFoto1Button, true);
+                } catch (NumberFormatException e) {
+                    Log.e("QR_FORMAT_ERROR", "El QR no contiene números válidos en las partes esperadas.", e);
+                    resultadoRemito.setText(R.string.remitos_qr_error_formato);
+                }
+            } else {
+                resultadoRemito.setText(R.string.remitos_qr_error_formato);
             }
         }
+    }
 
-        if (remitospendientes > 0) {
-            txtResultadoEnvio.setText("Remitos Pendientes: " + remitospendientes);
-            transferirpendientes.setVisibility(View.VISIBLE);
-        } else {
-            txtResultadoEnvio.setText("No hay remitos pendientes.");
-            transferirpendientes.setVisibility(View.INVISIBLE);
+    private void procesarResultadoFoto(androidx.activity.result.ActivityResult result) {
+        if (result.getResultCode() == Activity.RESULT_OK) {
+            if (fotoTomadaNumero == FOTO_NUMERO_1 || fotoTomadaNumero == FOTO_NUMERO_2) {
+                try {
+                    Bitmap bm = rotateBitmapOrientation(imageUrl);
+                    bm = escalar(bm);
+                    String base64Image = bitmapToBase64(bm);
+                    bm.recycle();
+
+                    if (fotoTomadaNumero == FOTO_NUMERO_1) {
+                        bytesFoto1 = base64Image;
+                        marcarBotonComoCompleto(tomarFoto1Button);
+                        habilitarBoton(tomarFoto2Button, true);
+                        habilitarBoton(agregarRemitoButton, true);
+                        resultadoRemito.setText(R.string.remitos_foto1_tomada);
+                    } else if (fotoTomadaNumero == FOTO_NUMERO_2) {
+                        bytesFoto2 = base64Image;
+                        marcarBotonComoCompleto(tomarFoto2Button);
+                        resultadoRemito.setText(R.string.remitos_foto2_tomada);
+                    }
+                } catch (IOException e) {
+                    resultadoRemito.setText(R.string.remitos_error_procesar_foto);
+                    Log.e("FOTO_ERROR", "Error I/O procesando la foto", e);
+                } finally {
+                    clearCache();
+                    fotoTomadaNumero = 0; // Resetear
+                }
+            }
         }
     }
 
-    // --- MÉTODOS DE ACCIÓN DE BOTONES ---
+    // --- MÉTODOS DE ACCIÓN DE BOTONES (llamados desde XML) ---
+
+    public void lanzarPrincipal(View view) {
+        finish(); // Cierra esta actividad y vuelve a la anterior
+    }
 
     public void nuevoIngreso(View view) {
+        // MEJORA: Actualizar el contador de pendientes al iniciar un nuevo ingreso.
+        actualizarContadorRemitosPendientes();
+
+        // 1. Limpiar campos de texto de la UI
+        nrocarga.setText("");
+        bocaremito.setText("");
+        remito.setText("");
+        razonsocial.setText("");
+        resultadoRemito.setText("");
+
+        // 2. Limpiar variables de datos de fotos para evitar envíos incorrectos
+        bytesFoto1 = "";
+        bytesFoto2 = "";
+
+        // 3. Deshabilitar y resetear visualmente los botones de los siguientes pasos
+        habilitarBoton(tomarFoto1Button, false);
+        restaurarColorOriginalBoton(tomarFoto1Button);
+        habilitarBoton(tomarFoto2Button, false);
+        restaurarColorOriginalBoton(tomarFoto2Button);
+        habilitarBoton(agregarRemitoButton, false);
+
+        // 4. Iniciar el escáner QR
         IntentIntegrator integrador = new IntentIntegrator(this);
         integrador.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
-        integrador.setPrompt("Lector - QR");
+        integrador.setPrompt(getString(R.string.remitos_lector_qr_prompt));
         integrador.setBeepEnabled(true);
-        integrador.setTorchEnabled(true);
         activityLauncher.launch(integrador.createScanIntent());
     }
 
     public void tomarFoto(View view) {
         int id = view.getId();
         if (id == R.id.cmdTomarFoto1) {
-            fotoTomada = 1;
+            fotoTomadaNumero = FOTO_NUMERO_1;
         } else if (id == R.id.cmdTomarFoto2) {
-            fotoTomada = 2;
+            fotoTomadaNumero = FOTO_NUMERO_2;
         } else {
             return;
         }
 
         Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (i.resolveActivity(getPackageManager()) != null) {
-            File imagenArchivo = null;
-            try {
-                imagenArchivo = creararchivo();
-            } catch (IOException e) {
-                Log.e("CAPTURA_FOTO", "Error creando archivo", e);
-            }
-            if (imagenArchivo != null) {
-                fotoUri = FileProvider.getUriForFile(this, "com.arturocalcagno.fecoapp.fileprovider", imagenArchivo);
-                i.putExtra(MediaStore.EXTRA_OUTPUT, fotoUri);
-                activityLauncher.launch(i);
-            }
+        File imagenArchivo;
+        try {
+            imagenArchivo = crearArchivoImagen();
+        } catch (IOException e) {
+            Log.e("CAPTURA_FOTO", "Error creando archivo de imagen", e);
+            return; // No continuar si no se puede crear el archivo
         }
+
+        Uri fotoUri = FileProvider.getUriForFile(this, "com.arturocalcagno.fecoapp.FecoApp", imagenArchivo);
+        i.putExtra(MediaStore.EXTRA_OUTPUT, fotoUri);
+        activityLauncher.launch(i);
     }
 
-    public void agregartransaccion(View view) {
+    public void agregarTransaccion(View view) {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE_LOCATION_PERMISSION);
         } else {
@@ -278,21 +262,106 @@ public class Remitos extends AppCompatActivity {
         }
     }
 
-    public void transferirremitospendientes(View view){
-        progressBarSinc.setVisibility(View.VISIBLE);
-        txtResultadoEnvio.setText("Sincronizando pendientes...");
+    public void transferirRemitosPendientes(View view){
+        mostrarProgresoSinc(true);
+        resultadoEnvio.setText(R.string.remitos_sincronizando);
+        iniciarSincronizacionEnSegundoPlano(true);
+    }
+
+    // --- LÓGICA DE ESTADO DE LA UI ---
+
+    private void configurarEstadoInicial() {
+        habilitarBoton(nuevoIngresoButton, true);
+        habilitarBoton(tomarFoto1Button, false);
+        habilitarBoton(tomarFoto2Button, false);
+        habilitarBoton(agregarRemitoButton, false);
+
+        resultadoRemito.setText("");
+        resultadoEnvio.setText("");
+
+        mostrarProgresoSinc(true);
+        resultadoEnvio.setText(R.string.remitos_validando_datos);
+
+        iniciarSincronizacionEnSegundoPlano(false);
+    }
+
+    private void iniciarSincronizacionEnSegundoPlano(boolean mostrarErrorConexion) {
         new Thread(() -> {
-            if (internetDisponible()){
-                sincronizarremitospendientes();
+            if (internetDisponible()) {
+                sincronizarRemitosPendientes();
+                runOnUiThread(this::actualizarContadorRemitosPendientes);
             } else {
-                runOnUiThread(()-> txtResultadoEnvio.setText("Sin conexión para sincronizar."));
+                if (mostrarErrorConexion) {
+                    runOnUiThread(() -> {
+                        mostrarProgresoSinc(false);
+                        resultadoEnvio.setText(R.string.remitos_sin_conexion_sinc);
+                    });
+                } else {
+                    runOnUiThread(this::actualizarContadorRemitosPendientes);
+                }
             }
-            runOnUiThread(this::actualizarremitospendientes);
         }).start();
     }
 
+    @SuppressLint("Range")
+    private void actualizarContadorRemitosPendientes() {
+        mostrarProgresoSinc(false);
+        int remitosPendientes = 0;
+        try (Cursor c = dbHelper.getTotalRemitosPendientes()) {
+            if (c != null && c.moveToFirst()) {
+                remitosPendientes = c.getInt(c.getColumnIndex("total"));
+            }
+        }
 
-    // --- LÓGICA DE UBICACIÓN Y ENVÍO (sin cambios) ---
+        if (remitosPendientes > 0) {
+            resultadoEnvio.setText(getString(R.string.remitos_pendientes, remitosPendientes));
+            transferirPendientesButton.setVisibility(View.VISIBLE);
+        } else {
+            resultadoEnvio.setText("");
+            transferirPendientesButton.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    private void habilitarBoton(Button button, boolean habilitar) {
+        button.setEnabled(habilitar);
+        button.getBackground().setAlpha(habilitar ? 255 : 64);
+    }
+
+    private void marcarBotonComoCompleto(Button button) {
+        button.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_green_dark));
+    }
+
+    private void restaurarColorOriginalBoton(Button button) {
+        button.setBackgroundColor(0xFFFEAA0C); // Color original de los botones
+    }
+
+    private void mostrarProgreso(boolean mostrar) {
+        progressBar.setVisibility(mostrar ? View.VISIBLE : View.GONE);
+        habilitarBoton(agregarRemitoButton, !mostrar);
+        habilitarBoton(nuevoIngresoButton, !mostrar);
+        habilitarBoton(transferirPendientesButton, !mostrar);
+        habilitarBoton(tomarFoto1Button, false);
+        habilitarBoton(tomarFoto2Button, false);
+    }
+
+    private void mostrarProgresoSinc(boolean mostrar) {
+        progressBarSinc.setVisibility(mostrar ? View.VISIBLE : View.GONE);
+        habilitarBoton(transferirPendientesButton, !mostrar);
+    }
+
+    // --- LÓGICA DE UBICACIÓN Y ENVÍO ---
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CODE_LOCATION_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                verificarGPSyObtenerUbicacion();
+            } else {
+                Toast.makeText(this, R.string.remitos_permiso_ubicacion_necesario, Toast.LENGTH_LONG).show();
+            }
+        }
+    }
 
     @SuppressLint("SetTextI18n")
     private void verificarGPSyObtenerUbicacion() {
@@ -310,7 +379,7 @@ public class Remitos extends AppCompatActivity {
                     ((ResolvableApiException) e).startResolutionForResult(this, REQUEST_CHECK_SETTINGS);
                 } catch (IntentSender.SendIntentException ignored) {}
             } else {
-                txtResultadoEnvio.setText("¡Activa el GPS para continuar!");
+                resultadoRemito.setText(R.string.remitos_activar_gps);
             }
         });
     }
@@ -328,20 +397,18 @@ public class Remitos extends AppCompatActivity {
                     procesarEnvioDatosConUbicacion();
                 } else {
                     runOnUiThread(() -> {
-                        progressBar.setVisibility(View.GONE);
-                        agregarremito.setEnabled(true);
-                        txtResultadoEnvio.setText("No se pudo obtener ubicación. Intente de nuevo.");
+                        mostrarProgreso(false);
+                        resultadoRemito.setText(R.string.remitos_error_obtener_ubicacion);
                     });
                 }
             }
         };
     }
 
-    @SuppressLint({"MissingPermission", "SetTextI18n"})
+    @SuppressLint({"MissingPermission"})
     private void obtenerUbicacion(LocationRequest locationRequest) {
-        agregarremito.setEnabled(false);
-        progressBar.setVisibility(View.VISIBLE);
-        txtResultadoEnvio.setText("Obteniendo ubicación...");
+        mostrarProgreso(true);
+        resultadoRemito.setText(R.string.remitos_obteniendo_ubicacion);
 
         fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
             if (location != null && (System.currentTimeMillis() - location.getTime()) < 60000) {
@@ -352,44 +419,49 @@ public class Remitos extends AppCompatActivity {
                 fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
             }
         }).addOnFailureListener(this, e -> {
-            progressBar.setVisibility(View.GONE);
-            agregarremito.setEnabled(true);
-            txtResultadoEnvio.setText("Error al obtener la ubicación.");
+            mostrarProgreso(false);
+            resultadoRemito.setText(R.string.remitos_error_al_obtener_ubicacion);
         });
     }
 
-    @SuppressLint("SetTextI18n")
     private void procesarEnvioDatosConUbicacion() {
         if (internetDisponible()) {
-            txtResultadoEnvio.setText("Enviando Remito...");
+            resultadoEnvio.setText(R.string.remitos_enviando);
             new Thread(() -> {
                 WebService ws = new WebService();
-                final String res = ws.registrarremito(carga, boca, remito, razonsocial, registro, bytesfoto1, latitudeGPS, longitudeGPS, bytesfoto2);
+                final String res = ws.registrarremito(nrocarga.getText().toString(), bocaremito.getText().toString(), remito.getText().toString(), razonsocial.getText().toString(), registro, bytesFoto1, latitudeGPS, longitudeGPS, bytesFoto2);
                 runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
+                    mostrarProgreso(false);
                     if ("true".equals(res)) {
-                        txtResultadoEnvio.setText("Remito Enviado");
-                        actualizarobjetospantalla();
+                        resultadoEnvio.setText(R.string.remitos_enviado_exito);
                     } else {
-                        txtResultadoEnvio.setText("Error al enviar. Se guardó para enviar luego.");
-                        dbHelper.agregarRemito(carga, boca, remito, razonsocial, registro, bytesfoto1, latitudeGPS, longitudeGPS, bytesfoto2);
-                        actualizarobjetospantalla();
+                        resultadoEnvio.setText(R.string.remitos_error_envio);
+                        dbHelper.agregarRemito(nrocarga.getText().toString(), bocaremito.getText().toString(), remito.getText().toString(), razonsocial.getText().toString(), registro, bytesFoto1, latitudeGPS, longitudeGPS, bytesFoto2);
                     }
+                    // Congelar la UI después del envío, mostrando el resultado.
+                    habilitarBoton(tomarFoto1Button, false);
+                    habilitarBoton(tomarFoto2Button, false);
+                    habilitarBoton(agregarRemitoButton, false);
+                    resultadoRemito.setText("");
                 });
             }).start();
         } else {
-            progressBar.setVisibility(View.GONE);
-            txtResultadoEnvio.setText("Sin conexión. Se guardó para enviar luego.");
-            dbHelper.agregarRemito(carga, boca, remito, razonsocial, registro, bytesfoto1, latitudeGPS, longitudeGPS, bytesfoto2);
-            actualizarobjetospantalla();
+            mostrarProgreso(false);
+            resultadoEnvio.setText(R.string.remitos_guardado_sin_conexion);
+            dbHelper.agregarRemito(nrocarga.getText().toString(), bocaremito.getText().toString(), remito.getText().toString(), razonsocial.getText().toString(), registro, bytesFoto1, latitudeGPS, longitudeGPS, bytesFoto2);
+            // Congelar la UI después del envío, mostrando el resultado.
+            habilitarBoton(tomarFoto1Button, false);
+            habilitarBoton(tomarFoto2Button, false);
+            habilitarBoton(agregarRemitoButton, false);
+            resultadoRemito.setText("");
         }
     }
 
 
-    // --- SINCRONIZACIÓN Y AYUDANTES (sin cambios) ---
+    // --- SINCRONIZACIÓN Y AYUDANTES ---
 
     @SuppressLint("Range")
-    private void sincronizarremitospendientes() {
+    private void sincronizarRemitosPendientes() {
         try (Cursor c = dbHelper.getRemitosPendientes()) {
             if (c != null) {
                 while (c.moveToNext()) {
@@ -411,7 +483,7 @@ public class Remitos extends AppCompatActivity {
                 }
             }
         } catch (Exception e) {
-            Log.e("SINC_ERROR", "Error sincronizando remitos", e);
+            Log.e("SINC_ERROR", "Error sincronizando remitos pendientes", e);
         }
     }
 
@@ -425,19 +497,23 @@ public class Remitos extends AppCompatActivity {
     }
 
 
-    private File creararchivo() throws IOException {
+    private File crearArchivoImagen() throws IOException {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
         String nombreArchivo = "JPEG_" + timeStamp + "_";
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        // MEJORA: Añadir una comprobación para evitar un NullPointerException si el almacenamiento no está disponible.
+        if (storageDir == null) {
+            throw new IOException("No se puede acceder al directorio de imágenes externo.");
+        }
         File image = File.createTempFile(nombreArchivo, ".jpg", storageDir);
-        imageurl = image.getAbsolutePath();
+        imageUrl = image.getAbsolutePath();
         return image;
     }
 
     private Bitmap escalar(Bitmap bitmap) {
         int w = bitmap.getWidth();
         int h = bitmap.getHeight();
-        int newW = 800;
+        int newW = 800; // Ancho fijo para la escala
         int newH = (h * newW) / w;
         return Bitmap.createScaledBitmap(bitmap, newW, newH, false);
     }
@@ -449,38 +525,68 @@ public class Remitos extends AppCompatActivity {
         return Base64.encodeToString(byteArray, Base64.DEFAULT);
     }
 
-    public Bitmap rotateBitmapOrientation(String photoFilePath) throws IOException {
-        BitmapFactory.Options bounds = new BitmapFactory.Options();
-        bounds.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(photoFilePath, bounds);
-        BitmapFactory.Options opts = new BitmapFactory.Options();
-        Bitmap bm = BitmapFactory.decodeFile(photoFilePath, opts);
+    private int getRotationAngle(String photoFilePath) throws IOException {
         ExifInterface exif = new ExifInterface(photoFilePath);
-        String orientString = exif.getAttribute(ExifInterface.TAG_ORIENTATION);
-        int orientation = orientString != null ? Integer.parseInt(orientString) : ExifInterface.ORIENTATION_NORMAL;
-        int rotationAngle = 0;
-        if (orientation == ExifInterface.ORIENTATION_ROTATE_90) rotationAngle = 90;
-        if (orientation == ExifInterface.ORIENTATION_ROTATE_180) rotationAngle = 180;
-        // --- CORRECCIÓN FINAL ---
-        if (orientation == ExifInterface.ORIENTATION_ROTATE_270) rotationAngle = 270;
+        int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+        return switch (orientation) {
+            case ExifInterface.ORIENTATION_ROTATE_90 -> 90;
+            case ExifInterface.ORIENTATION_ROTATE_180 -> 180;
+            case ExifInterface.ORIENTATION_ROTATE_270 -> 270;
+            default -> 0;
+        };
+    }
+
+    public Bitmap rotateBitmapOrientation(String photoFilePath) throws IOException {
+        Bitmap sourceBitmap = BitmapFactory.decodeFile(photoFilePath, new BitmapFactory.Options());
+        if (sourceBitmap == null) {
+            throw new IOException("No se pudo decodificar el archivo de imagen: " + photoFilePath);
+        }
+
+        int rotationAngle = getRotationAngle(photoFilePath);
+
+        if (rotationAngle == 0) {
+            return sourceBitmap;
+        }
+
         Matrix matrix = new Matrix();
-        matrix.setRotate(rotationAngle, (float) bm.getWidth() / 2, (float) bm.getHeight() / 2);
-        return Bitmap.createBitmap(bm, 0, 0, bounds.outWidth, bounds.outHeight, matrix, true);
+        matrix.setRotate(rotationAngle, (float) sourceBitmap.getWidth() / 2, (float) sourceBitmap.getHeight() / 2);
+
+        try {
+            Bitmap rotatedBitmap = Bitmap.createBitmap(sourceBitmap, 0, 0, sourceBitmap.getWidth(), sourceBitmap.getHeight(), matrix, true);
+            sourceBitmap.recycle();
+            return rotatedBitmap;
+        } catch (OutOfMemoryError e) {
+            Log.e("ROTATE_BITMAP", "Error de memoria al rotar el bitmap", e);
+            return sourceBitmap;
+        }
     }
 
     private void clearCache() {
         try {
             File dir = getBaseContext().getCacheDir();
             if (dir != null && dir.isDirectory()) {
-                for (File child : dir.listFiles()) {
-                    child.delete();
+                File[] children = dir.listFiles();
+                if (children != null) { // Evita NullPointerException
+                    for (File child : children) {
+                        if (!child.delete()) {
+                            Log.w("CLEAR_CACHE", "No se pudo eliminar el archivo de caché: " + child.getName());
+                        }
+                    }
                 }
             }
         } catch (Exception e) {
-            Log.e("CLEAR_CACHE", "Error limpiando caché", e);
+            Log.e("CLEAR_CACHE", "Error limpiando el caché", e);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (dbHelper != null) {
+            dbHelper.close();
+        }
+        if (fusedLocationClient != null && locationCallback != null) {
+            fusedLocationClient.removeLocationUpdates(locationCallback);
         }
     }
 }
-
-
-

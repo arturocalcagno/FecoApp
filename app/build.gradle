@@ -6,12 +6,23 @@ plugins {
 }
 
 android {    namespace "com.arturocalcagno.fecoapp"
-    compileSdk libs.versions.compileSdk.get().toInteger()
+    compileSdk = libs.versions.compileSdk.get().toInteger()
+
+    signingConfigs {
+        release {
+            storeFile file('DKEY21102025.jks')
+            storePassword 'archi04'
+            keyAlias 'fecoapp'
+            keyPassword 'archi04'
+        }
+    }
 
     defaultConfig {
-        applicationId "com.arturocalcagno.fecoApp"
-        minSdk libs.versions.minSdk.get().toInteger()
-        targetSdk libs.versions.targetSdk.get().toInteger()
+        // CORRECCIÓN: El Application ID debe ser exactamente igual entre versiones, incluyendo mayúsculas y minúsculas.
+        // La convención es usar todo en minúsculas.
+        applicationId "com.arturocalcagno.fecoapp"
+        minSdk = libs.versions.minSdk.get().toInteger()
+        targetSdk = libs.versions.targetSdk.get().toInteger()
         versionCode 2
         versionName "2.3"
 

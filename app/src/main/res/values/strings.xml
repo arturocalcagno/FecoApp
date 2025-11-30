@@ -52,4 +52,49 @@
     <string name="error_package_installer_not_found">No se encontró un instalador de paquetes válido.</string>
     <string name="download_started_notification">La descarga ha comenzado. Verifique el progreso en la barra de notificaciones.</string>
 
+    <!-- Cadenas de texto para Cargas.java -->
+    <string name="cargas_error_empresa">Ingrese la Empresa</string>
+    <string name="cargas_error_celular">Ingrese el Celular</string>
+    <string name="cargas_error_provincia">Seleccione una Provincia</string>
+    <string name="cargas_error_vehiculos">Indique cantidad de vehículos</string>
+    <string name="cargas_obteniendo_ubicacion">Obteniendo ubicación...</string>
+    <string name="cargas_error_ubicacion">No se pudo obtener ubicación. Intente de nuevo.</string>
+    <string name="cargas_error_activar_gps">Error al intentar activar el GPS</string>
+    <string name="cargas_necesita_gps">¡Activa el GPS para continuar!</string>
+    <string name="cargas_enviando">Enviando disponibilidad...</string>
+    <string name="cargas_envio_exitoso">Disponibilidad enviada con éxito.</string>
+    <string name="cargas_envio_fallido">No se pudo enviar. Se reintentará luego.</string>
+    <string name="cargas_sin_conexion">Sin conexión. Se guardó para enviar luego.</string>
+    <string name="cargas_permiso_ubicacion_necesario">El permiso de ubicación es necesario para continuar</string>
+
+    <!-- Cadenas de texto para Remitos.java -->
+    <string name="remitos_qr_error_formato">Error: Código QR con formato incorrecto.</string>
+    <string name="remitos_foto1_tomada">Foto 1 tomada</string>
+    <string name="remitos_foto2_tomada">Foto 2 tomada</string>
+    <string name="remitos_error_procesar_foto">Error al procesar la foto</string>
+    <string name="remitos_validando_datos">Validando datos...</string>
+    <string name="remitos_pendientes">Remitos Pendientes: %d</string>
+    <string name="remitos_no_hay_pendientes">No hay remitos pendientes.</string>
+    <string name="remitos_lector_qr_prompt">Lector - QR</string>
+    <string name="remitos_sincronizando">Sincronizando pendientes...</string>
+    <string name="remitos_sin_conexion_sinc">Sin conexión para sincronizar.</string>
+    <string name="remitos_activar_gps">¡Activa el GPS para continuar!</string>
+    <string name="remitos_obteniendo_ubicacion">Obteniendo ubicación...</string>
+    <string name="remitos_error_obtener_ubicacion">No se pudo obtener ubicación. Intente de nuevo.</string>
+    <string name="remitos_error_al_obtener_ubicacion">Error al obtener la ubicación.</string>
+    <string name="remitos_enviando">Enviando Remito...</string>
+    <string name="remitos_enviado_exito">¡Remito enviado!</string>
+    <string name="remitos_error_envio">Error, se guardó para enviar luego.</string>
+    <string name="remitos_guardado_sin_conexion">Sin conexión. Se guardó para enviar luego.</string>
+    <string name="remitos_permiso_ubicacion_necesario">El permiso de ubicación es necesario para registrar el remito.</string>
+    <string name="remitos_boca_remito">Boca: %1$s Remito: %2$s</string>
+    <string name="cargas">Cargas</string>
+    <string name="fotos">Fotos</string>
+    <string name="remito">Remito</string>
+    <string name="_2_1_foto_1">2.1.FOTO 1</string>
+    <string name="_2_2_foto_2_opcional">2.2.FOTO 2 (OPCIONAL)</string>
+    <string name="Enviar">TODO</string>
+    <string name="foto2">Foto2</string>
+    <string name="foto1">Foto1</string>
+
 </resources>
